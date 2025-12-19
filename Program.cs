@@ -2,6 +2,8 @@
 using System.Threading;
 using TurnBasedBattle;
 using TurnBasedBattle.Models;
+using TurnBasedBattle.Core;
+
 
 class Program
 {
@@ -13,53 +15,46 @@ class Program
 
     Console.WriteLine("=== Turn-Based Battle ===");
 
-    while (!battle.IsGameOver())
+    while (true)
     {
       Console.WriteLine();
       Console.WriteLine($"Player HP: {player.Hp}, Stamina: {player.Stamina}");
       Console.WriteLine($"Enemy HP: {enemy.Hp}");
       Console.WriteLine();
 
-      battle.Log.Clear();
+      var state = battle.GetState();
 
-      if (battle.IsPlayerTurn)
+      switch (state.Phase)
       {
-        Console.WriteLine("Seu Turno");
-        Console.WriteLine("1 - Ataque fraco");
-        Console.WriteLine("2 - Ataque forte");
-        Console.WriteLine("3 - Defender");
+        case GamePhase.PlayerTurn:
+          Console.WriteLine("Seu Turno");
+          Console.WriteLine("1 - Ataque fraco");
+          Console.WriteLine("2 - Ataque forte");
+          Console.WriteLine("3 - Defender");
+                                
+          var input = Console.ReadLine();
 
-        string input = Console.ReadLine() ?? "";
+          if (input == "1")
+              battle.PlayerAttack(2, 1, "Ataque fraco");
+          else if (input == "2")
+              battle.PlayerAttack(3, 2, "Ataque forte");
+          else if (input == "3")
+              battle.PlayerDefend();
+          break;
 
-        switch (input)
-        {
-          case "1":
-            battle.PlayerAttack(1, 1, "Ataque fraco");
-            break;
-          case "2":
-            battle.PlayerAttack(3, 2, "Ataque forte");
-            break;
-          case "3":
-            battle.PlayerDefend();
-            break;
-          default: 
-            Console.WriteLine("Ação inválida");
-            continue;
-        }
-      }
-    else
-    {
-      Console.WriteLine("Turno do inimigo...");
-      Thread.Sleep(500);
-      battle.EnemyTurn();
-    }
+        case GamePhase.EnemyTurn:
+          Console.WriteLine("turno do inimigo...");
+          Thread.Sleep(500);
+          battle.EnemyTurn();
+          break;
 
-    foreach (var gameEvent in battle.Log.GetEvents())
-      {
-        Console.WriteLine(gameEvent.Message);
+        case GamePhase.Victory:
+          Console.WriteLine("Você venceu!");
+          return;
+        case GamePhase.Defeat:
+          Console.WriteLine("Você perdeu");
+          return;
       }
     }
-    Console.WriteLine();
-    Console.WriteLine(player.Hp > 0 ? "Você venceu!" : "Você perdeu!");
   }
 }

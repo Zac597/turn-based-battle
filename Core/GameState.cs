@@ -6,15 +6,13 @@
     {
       public Player Player { get; }
       public Enemy Enemy { get; }
-      public bool IsPlayerTurn { get; }
-      public bool  IsGameOver { get; }
+      public GamePhase Phase { get; }
 
-      public GameState(Player player, Enemy enemy, bool isPlayerTurn, bool isGameOver)
+      public GameState(Player player, Enemy enemy, GamePhase phase)
       {
         Player = player;
         Enemy = enemy;
-        IsPlayerTurn = isPlayerTurn;
-        IsGameOver = isGameOver;
+        Phase = phase;
       }
     }
   }
