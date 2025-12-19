@@ -1,21 +1,26 @@
 using TurnBasedBattle.Models;
+using TurnBasedBattle.Systems;
+using TurnBasedBattle.Core;
 
 namespace TurnBasedBattle
 {
   public class Battle
   {
-    public Player Player { get; private set; }
-    public Enemy Enemy { get; private set; }
+    public Player Player { get; }
+    public Enemy Enemy { get; }
     public bool IsPlayerTurn { get; private set; }
+
+    public BattleLog Log { get; }
 
     public Battle(Player player, Enemy enemy)
     {
       Player = player;
       Enemy = enemy;
       IsPlayerTurn = true;
+      Log = new BattleLog();
     }
 
-    public void PlayerAttack(int damage, int staminaCost)
+    public void PlayerAttack(int damage, int staminaCost, string attackName)
     {
       if(!IsPlayerTurn) return;
       if(Player.Stamina < staminaCost) return;
@@ -24,15 +29,23 @@ namespace TurnBasedBattle
       Player.Stamina -= staminaCost;
       Player.IsDefending = false;
 
+      Log.Add(GameEventType.Attack, $"Player usou {attackName} e causou {damage} de dano;");
+
       IsPlayerTurn = false;
     }
 
     public void PlayerDefend()
     {
-      if (!IsPlayerTurn) return;
+      if (!IsPlayerTurn)
+      {
+        Log.Add(GameEventType.Attack, "Não é o seu turno.");
+        return;
+      }
 
       Player.Stamina += 1;
       Player.IsDefending = true;
+
+      Log.Add(GameEventType.Attack, "Player está se defendendo e recuperou 1 de stamina.");
 
       IsPlayerTurn = false;
     }
@@ -45,6 +58,8 @@ namespace TurnBasedBattle
 
       Player.Hp -= damage;
       Player.IsDefending = false;
+
+      Log.Add(GameEventType.Attack, $"Inimigo atacou e causou {damage} de dano.");
 
       IsPlayerTurn = true;
     }
