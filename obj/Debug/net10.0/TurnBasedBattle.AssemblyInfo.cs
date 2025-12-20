@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("TurnBasedBattle")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+3fc74c4932cae89d153bcd5eea6721eb18ec543f")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+8fba720c5cd432235c07e176b932674026d44887")]
 [assembly: System.Reflection.AssemblyProductAttribute("TurnBasedBattle")]
 [assembly: System.Reflection.AssemblyTitleAttribute("TurnBasedBattle")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

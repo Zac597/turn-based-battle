@@ -1,11 +1,23 @@
 using TurnBasedBattle.Models;
 using TurnBasedBattle.Systems;
 using TurnBasedBattle.Core;
+using System;
+using System.Threading;
 
 namespace TurnBasedBattle
 {
+  public static class CombatRules
+  {
+      public const int EnemyWeakDamage = 1;
+      public const int EnemyStrongDamage = 2;
+      public const int EnemyMissChance = 15;
+      public const int EnemyStrongChance = 40;
+  }
+
   public class Battle
   {
+    private static readonly Random _rng = new Random();
+
     public Player Player { get; }
     public Enemy Enemy { get; }
     public GamePhase Phase { get; private set; }
@@ -19,63 +31,95 @@ namespace TurnBasedBattle
       Log = new BattleLog();
     }
 
-    public void PlayerAttack(int damage, int staminaCost, string attackName)
+    public void PlayerAttack(Attack attack)
     {
-      if(Phase != GamePhase.PlayerTurn)
-      {
-        Log.Add(GameEventType.System, "Não é o seu turno");
-        return;
-      }
 
-      if(Player.Stamina < staminaCost)
-      {
-        Log.Add(GameEventType.System, "Stamina insuficiente.");
-        return;
-      }
+        if (Phase != GamePhase.PlayerTurn)
+        {
+            Log.Add(GameEventType.System, "Não é o seu turno.");
+            return;
+        }
 
-      Enemy.Hp -= damage;
-      Player.Stamina -= staminaCost;
-      Player.IsDefending = false;
+        if (Player.Stamina < attack.StaminaCost)
+        {
+            Log.Add(GameEventType.System, "Stamina insuficiente.");
+            return;
+        }
 
-      Log.Add(GameEventType.Attack, $"Player usou {attackName} e causou {damage} de dano.");
+        Enemy.Hp -= attack.Damage;
+        Player.Stamina -= attack.StaminaCost;
+        Player.IsDefending = false;
 
-      if (Enemy.Hp <= 0)
-      {
-          Phase = GamePhase.Victory;
-          Log.Add(GameEventType.System, "Você venceu a batalha!");
-          return;
-      }
+        Log.Add(GameEventType.Attack, $"Player usou {attack.Name} e causou {attack.Damage} de dano.");
 
+        if (Enemy.Hp <= 0)
+        {
+            Phase = GamePhase.Victory;
+            Log.Add(GameEventType.System, "Você venceu a batalha!");
+            return;
+        }
 
-      Phase = GamePhase.EnemyTurn;
+        Phase = GamePhase.EnemyTurn;
     }
 
     public void PlayerDefend()
     {
       if (Phase != GamePhase.PlayerTurn)
-      {
-        Log.Add(GameEventType.System, "Não é o seu turno.");
-        return;
-      }
+        {
+          Log.Add(GameEventType.System, "Não é o seu turno.");
+          return;
+        }
+      if (Player.Stamina >= Player.MaxStamina)
+        {
+          Log.Add(GameEventType.System, "Sua stamina já está cheia, você precisa atacar.");
+        }
+      else
+        {
+          Player.Stamina += 1;
+          Log.Add(GameEventType.Defend, "Player se defendeu e recuperou 1 de stamina.");
+        }
 
-      Player.Stamina += 1;
       Player.IsDefending = true;
-
-      Log.Add(GameEventType.Attack, "Player está se defendendo e recuperou 1 de stamina.");
-
       Phase = GamePhase.EnemyTurn;
     }
 
     public void EnemyTurn()
     {
       if (Phase != GamePhase.EnemyTurn) return;
+      Thread.Sleep(600);
       
-      int damage = Player.IsDefending ? 1 : 2;
+      Log.Add(GameEventType.System, $"{Enemy.Profile.Name} está se preparando...");
 
-      Player.Hp -= damage;
+      int roll = _rng.Next(1, 101);
+
+      if(roll <= Enemy.Profile.MissChance)
+      {
+        Log.Add(GameEventType.System, "O inimigo errou o ataque!");
+      }
+      else
+      {
+        int baseDamage;
+
+        if (roll <= Enemy.Profile.MissChance + Enemy.Profile.StrongChance)
+        {
+          baseDamage = Enemy.Profile.StrongDamage;
+          Log.Add(GameEventType.System, $"{Enemy.Profile.Name} usou um ATAQUE FORTE!");
+        }
+        else
+        {
+          baseDamage = Enemy.Profile.WeakDamage;
+          Log.Add(GameEventType.System, $"{Enemy.Profile.Name} atacou!");
+        }
+
+        int finalDamage = Player.IsDefending ? baseDamage - 1 : baseDamage;
+        finalDamage = Math.Max(0, finalDamage);
+
+        Player.Hp -= finalDamage;
+        Log.Add(GameEventType.Attack, $"E causou {finalDamage} de dano.");
+      }
+
       Player.IsDefending = false;
 
-      Log.Add(GameEventType.Attack, $"Inimigou atacou e causou {damage} de dano.");
       
       if (Player.Hp <= 0)
       {
